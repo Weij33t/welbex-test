@@ -5,11 +5,17 @@ const getWhereByCondition = (condition, column, value) => {
     case 'contains':
       return `WHERE ${column} LIKE '%' || '${value}' || '%'`
     case 'greater':
-      return `WHERE ${column} > ${value}`
+      if (+value !== +value || column === 'name') {
+        return false
+      }
+      return `WHERE ${column} > CAST ('${value}' AS INTEGER)`
     case 'lower':
-      return `WHERE ${column} < ${value}`
+      if (+value !== +value || column === 'name') {
+        return false
+      }
+      return `WHERE ${column} < CAST ('${value}' AS INTEGER)`
     case 'equals':
-      return `WHERE ${column}=${value}`
+      return `WHERE ${column}='${value}'`
 
     default:
       break
@@ -21,30 +27,49 @@ const buildQuery = (whereCondition) => {
 }
 
 const controller = {
-  async getRows(req, res) {
-    const { from, to } = req.query
-    console.log(from, to)
-    await db.query(
-      'SELECT * FROM welbex WHERE id >= $1 AND id <= $2',
-      [from, to],
-      (err, data) => {
-        if (err) {
-          throw err
-        }
-        res.send({ data: data.rows, length: data.rows.length })
+  async getRowsPortion(req, res) {
+    const { from, to, column, condition, value } = req.query
+    let query
+    let queryParams = [from - 1, to]
+    let length = 0
+    if (column && condition && value) {
+      const whereCondition = getWhereByCondition(condition, column, value)
+      if (whereCondition === false) {
+        res.status(400).send('bad request')
+        return false
       }
-    )
+      console.log(from, to)
+      query = buildQuery(whereCondition) + ' OFFSET $1 LIMIT $2'
+    } else {
+      query = 'SELECT * FROM welbex WHERE id > $1 AND id <= $2'
+    }
+    console.log(query, from, to)
+    await db.query(query, queryParams, (err, data) => {
+      if (err) {
+        throw err
+      }
+      res.json(data.rows)
+    })
   },
-  async filterRows(req, res) {
-    const { name, condition, value } = req.query
-    const whereCondition = getWhereByCondition(condition, name, value)
-    const query = buildQuery(whereCondition)
-    console.log(query, name, condition, value)
+  async getRowsCount(req, res) {
+    const { column, condition, value } = req.query
+    let query
+    if (column && condition && value) {
+      const whereCondition = getWhereByCondition(condition, column, value)
+      if (whereCondition === false) {
+        res.status(400).send('bad request')
+        return false
+      }
+      query = 'SELECT COUNT(*) from welbex ' + whereCondition
+    } else {
+      query = 'SELECT COUNT(*) from welbex'
+    }
+    console.log(query, column, condition, value)
     await db.query(query, [], (err, data) => {
       if (err) {
         throw err
       }
-      res.send({ data: data.rows, length: data.rows.length })
+      res.send(data.rows[0].count)
     })
   },
 }
