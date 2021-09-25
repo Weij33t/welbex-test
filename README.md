@@ -10,6 +10,7 @@
   
   * В папках server и client запустить команду npm start 
 
+3. Deploy: welbex.netlify.app
 
 
 
