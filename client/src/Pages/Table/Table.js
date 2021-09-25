@@ -27,6 +27,7 @@ export const Table = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log(1)
       const data = await table.api.getRowsPortion(offset, LIMIT)
       const length = await table.api.getRowsCount()
       if (data === false) return setIsError(false)
@@ -36,7 +37,7 @@ export const Table = () => {
       setRowsCount(length)
     }
     fetchData()
-  })
+  }, [])
 
   const fetchFilteredRows = async () => {
     if (filters.value === '') {
