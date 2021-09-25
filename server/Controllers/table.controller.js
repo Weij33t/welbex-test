@@ -3,8 +3,7 @@ const db = require('../db/index.js')
 const getWhereByCondition = (condition, column, value) => {
   switch (condition) {
     case 'contains':
-      if (+value === +value) return false
-
+      if (column !== 'name') return false
       return `WHERE ${column} LIKE '%' || '${value}' || '%'`
     case 'greater':
       if (+value !== +value || column === 'name') return false
