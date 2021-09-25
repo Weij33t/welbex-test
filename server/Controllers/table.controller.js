@@ -28,9 +28,9 @@ const buildQuery = (whereCondition) => {
 
 const controller = {
   async getRowsPortion(req, res) {
-    const { from, to, column, condition, value } = req.query
+    const { offset, limit, column, condition, value } = req.query
     let query
-    let queryParams = [from - 1, to]
+    let queryParams = [offset, limit]
     let length = 0
     if (column && condition && value) {
       const whereCondition = getWhereByCondition(condition, column, value)
@@ -38,16 +38,17 @@ const controller = {
         res.status(400).send('bad request')
         return false
       }
-      console.log(from, to)
+      console.log(offset, limit)
       query = buildQuery(whereCondition) + ' OFFSET $1 LIMIT $2'
     } else {
-      query = 'SELECT * FROM welbex WHERE id > $1 AND id <= $2'
+      query = 'SELECT * FROM welbex OFFSET $1 LIMIT $2'
     }
-    console.log(query, from, to)
+    console.log(query, offset, limit)
     await db.query(query, queryParams, (err, data) => {
       if (err) {
         throw err
       }
+      console.log(data.rows.length)
       res.json(data.rows)
     })
   },
