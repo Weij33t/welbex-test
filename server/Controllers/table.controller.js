@@ -3,16 +3,16 @@ const db = require('../db/index.js')
 const getWhereByCondition = (condition, column, value) => {
   switch (condition) {
     case 'contains':
+      if (+value === +value) return false
+
       return `WHERE ${column} LIKE '%' || '${value}' || '%'`
     case 'greater':
-      if (+value !== +value || column === 'name') {
-        return false
-      }
+      if (+value !== +value || column === 'name') return false
+
       return `WHERE ${column} > CAST ('${value}' AS INTEGER)`
     case 'lower':
-      if (+value !== +value || column === 'name') {
-        return false
-      }
+      if (+value !== +value || column === 'name') return false
+
       return `WHERE ${column} < CAST ('${value}' AS INTEGER)`
     case 'equals':
       return `WHERE ${column}='${value}'`
@@ -23,7 +23,7 @@ const getWhereByCondition = (condition, column, value) => {
 }
 
 const buildQuery = (whereCondition) => {
-  return 'SELECT * FROM welbex ' + whereCondition
+  return 'SELECT * FROM welbex ' + whereCondition + ' OFFSET $1 LIMIT $2'
 }
 
 const controller = {
@@ -31,24 +31,20 @@ const controller = {
     const { offset, limit, column, condition, value } = req.query
     let query
     let queryParams = [offset, limit]
-    let length = 0
     if (column && condition && value) {
       const whereCondition = getWhereByCondition(condition, column, value)
       if (whereCondition === false) {
         res.status(400).send('bad request')
         return false
       }
-      console.log(offset, limit)
-      query = buildQuery(whereCondition) + ' OFFSET $1 LIMIT $2'
+      query = buildQuery(whereCondition)
     } else {
       query = 'SELECT * FROM welbex OFFSET $1 LIMIT $2'
     }
-    console.log(query, offset, limit)
     await db.query(query, queryParams, (err, data) => {
       if (err) {
         throw err
       }
-      console.log(data.rows.length)
       res.json(data.rows)
     })
   },
@@ -65,7 +61,6 @@ const controller = {
     } else {
       query = 'SELECT COUNT(*) from welbex'
     }
-    console.log(query, column, condition, value)
     await db.query(query, [], (err, data) => {
       if (err) {
         throw err
