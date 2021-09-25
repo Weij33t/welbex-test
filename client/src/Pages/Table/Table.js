@@ -25,20 +25,32 @@ export const Table = () => {
     column: '',
   })
 
+   const fetchData = async () => {
+    const data = await table.api.getRowsPortion(offset, LIMIT)
+    const length = await table.api.getRowsCount()
+    if (data === false) return setIsError(false)
+    setIsLoading(false)
+    setIsError(false)
+    setRows(data)
+    setRowsCount(length)
+  }
+
   useEffect(() => {
-    const fetchData = async () => {
-      console.log(1)
-      const data = await table.api.getRowsPortion(offset, LIMIT)
-      const length = await table.api.getRowsCount()
-      if (data === false) return setIsError(false)
-      setIsLoading(false)
-      setIsError(false)
-      setRows(data)
-      setRowsCount(length)
-    }
     fetchData()
   }, [])
 
+  const clearFilter = () => {
+    setFilters({
+      condition: '',
+      value: '',
+      column: '',
+    })
+    setCurrentPage(0)
+    setOffset(0)
+    fetchData()
+    
+  }
+  
   const fetchFilteredRows = async () => {
     if (filters.value === '') {
       const data = await table.api.getRowsPortion(0, 5)
@@ -102,6 +114,7 @@ export const Table = () => {
             closeFilter={closeFilter}
             filters={filters}
             setFilters={setFilters}
+            clearFilter={clearFilter}
           />
         )}
       </Row>
