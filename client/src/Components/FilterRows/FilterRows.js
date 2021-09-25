@@ -10,6 +10,7 @@ export const FilterRows = ({
   setFilters,
   filterRows,
   closeFilter,
+  clearFilter
 }) => {
   const columnNames = ['name', 'count', 'distance']
   const conditions = ['equals', 'contains', 'greater', 'lower']
@@ -61,7 +62,7 @@ export const FilterRows = ({
         />
         <Button onClick={() => filterRows()} value={'Фильтровать'} />
         <Button
-          onClick={() => setFilters({ value: '', condition: '', column: '' })}
+          onClick={() => clearFilter()}
           value={'Сбросить'}
         />
       </div>
